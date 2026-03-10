@@ -14,6 +14,7 @@
 
 from omegaconf import ListConfig
 import os
+import sys
 from typing import List, Union
 
 import pandas as pd
@@ -31,9 +32,19 @@ import verl.utils.torch_functional as verl_F
 import json
 
 try:
-    from libero.libero import benchmark
+    from libero.libero.benchmark import get_benchmark_dict
 except ImportError as e:
-    print(f"Warning : can't import libero: {e}")
+    get_benchmark_dict = None
+    _libero_import_error = str(e)
+    libero_path = os.environ.get("LIBERO_PATH")
+    if libero_path and libero_path not in sys.path:
+        sys.path.insert(0, libero_path)
+        try:
+            from libero.libero.benchmark import get_benchmark_dict  # noqa: F811
+        except ImportError:
+            pass
+    if get_benchmark_dict is None:
+        print(f"Warning : can't import libero: {_libero_import_error}")
     
 def collate_fn(data_list: list[dict]) -> dict:
     tensors = {}
@@ -75,7 +86,11 @@ class LIBERO_Dataset(Dataset):
         self._read_files_and_tokenize()
 
     def _read_files_and_tokenize(self):
-        benchmark_dict = benchmark.get_benchmark_dict()
+        if get_benchmark_dict is None:
+            raise ImportError(
+                "LIBERO is required for LIBERO_Dataset. Install it with: pip install -e /path/to/LIBERO"
+            )
+        benchmark_dict = get_benchmark_dict()
         task_suite = benchmark_dict[self.task_suite_name]()
         num_tasks_in_suite = task_suite.n_tasks
         dataframes = []

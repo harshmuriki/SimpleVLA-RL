@@ -1,5 +1,6 @@
 {
   "env_vars": {
+    "LIBERO_PATH": "/home/hice1/vmuriki3/scratch/LIBERO",
     "NCCL_DEBUG": "WARN",
     "RAY_memory_monitor_refresh_ms": "0",
     "VLLM_ATTENTION_BACKEND": "XFORMERS",

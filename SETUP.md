@@ -45,6 +45,7 @@ pip install -e .
 pip install packaging ninja
 ninja --version; echo $?  # Should return exit code "0"
 pip3 install flash-attn --no-build-isolation
+# If build fails with "CUDA version mismatches" or 404 on prebuilt wheel: use PyTorch 2.4+cu124 (Step 1) and reinstall flash-attn, or see "Flash-attn install failures" below.
 
 cd ..
 
@@ -162,3 +163,20 @@ For implementation reference, see:
 ```
 SimpleVLA-RL/modified_codes/robotwin2/envs/handover_block.py
 ```
+
+### Flash-attn install failures (CUDA mismatch / 404 wheel)
+
+If `pip install flash-attn --no-build-isolation` fails with:
+- **"The detected CUDA version (X) mismatches the version that was used to compile PyTorch (Y)"** — your system nvcc (or another CUDA toolkit on PATH) does not match PyTorch’s CUDA.  
+- **HTTP 404** when downloading a prebuilt wheel — no wheel for your exact PyTorch/CUDA/Python combo.
+
+**Fix (recommended):** Use the same PyTorch/CUDA as this guide so a prebuilt flash-attn wheel is available:
+
+```bash
+conda activate simplevla
+pip3 install torch==2.4.0 torchvision --index-url https://download.pytorch.org/whl/cu124
+pip cache remove flash_attn
+pip3 install flash-attn --no-build-isolation
+```
+
+Your driver (e.g. CUDA 12.9) is backward compatible with CUDA 12.4. If you must keep PyTorch 2.2 and CUDA 12.1, use a prebuilt wheel from [flashattn.dev](https://flashattn.dev) or [mjun0812/flash-attention-prebuild-wheels](https://github.com/mjun0812/flash-attention-prebuild-wheels) for your exact Python/torch/CUDA, or build with only the CUDA 12.1 toolkit on `PATH` (no CUDA 13.x).
